@@ -7,7 +7,7 @@ body:
         Thank you for reporting an issue :pray:.
 
         This issue tracker is for bugs and issues found with [Bolt.new](https://bolt.new).
-        If you experience issues related to WebContainer, please file an issue in our [WebContainer repo](https://github.com/stackblitz/webcontainer-core), or file an issue in our [StackBlitz core repo](https://github.com/stackblitz/core) for issues with StackBlitz.
+        If you experience issues related to WebContainer, please file an issue in our [WebContainer repo](https://github.com/leandromarcosmoreira/webcontainer-core), or file an issue in our [leandromarcosmoreira core repo](https://github.com/leandromarcosmoreira/core) for issues with leandromarcosmoreira.
 
         The more information you fill in, the better we can help you.
   - type: textarea
@@ -35,7 +35,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        ![Making your project public](https://github.com/stackblitz/bolt.new/blob/main/public/project-visibility.jpg?raw=true)
+        ![Making your project public](https://github.com/leandromarcosmoreira/bolt.new/blob/main/public/project-visibility.jpg?raw=true)
   - type: textarea
     id: steps
     attributes:
