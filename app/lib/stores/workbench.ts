@@ -9,6 +9,9 @@ import { EditorStore } from './editor';
 import { FilesStore, type FileMap } from './files';
 import { PreviewsStore } from './previews';
 import { TerminalStore } from './terminal';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { Octokit } from '@octokit/rest';
 
 export interface ArtifactState {
   id: string;
@@ -211,7 +214,7 @@ export class WorkbenchStore {
   }
 
   abortAllActions() {
-    // TODO: what do we wanna do and how do we wanna recover from this?
+    // todo: what do we wanna do and how do we wanna recover from this?
   }
 
   addArtifact({ messageId, title, id }: ArtifactCallbackData) {
@@ -270,6 +273,167 @@ export class WorkbenchStore {
   #getArtifact(id: string) {
     const artifacts = this.artifacts.get();
     return artifacts[id];
+  }
+
+  async downloadZip() {
+    const zip = new JSZip();
+    const files = this.files.get();
+
+    for (const [filePath, dirent] of Object.entries(files)) {
+      if (dirent?.type === 'file' && !dirent.isBinary) {
+        const relativePath = filePath.replace(/^\/home\/project\//, '');
+        const pathSegments = relativePath.split('/');
+
+        if (pathSegments.length > 1) {
+          let currentFolder = zip;
+
+          for (let i = 0; i < pathSegments.length - 1; i++) {
+            currentFolder = currentFolder.folder(pathSegments[i])!;
+          }
+          currentFolder.file(pathSegments[pathSegments.length - 1], dirent.content);
+        } else {
+          zip.file(relativePath, dirent.content);
+        }
+      }
+    }
+
+    const content = await zip.generateAsync({ type: 'blob' });
+    saveAs(content, 'project.zip');
+  }
+
+  async syncFiles(targetHandle: FileSystemDirectoryHandle) {
+    const files = this.files.get();
+    const syncedFiles = [];
+
+    for (const [filePath, dirent] of Object.entries(files)) {
+      if (dirent?.type === 'file' && !dirent.isBinary) {
+        const relativePath = filePath.replace(/^\/home\/project\//, '');
+        const pathSegments = relativePath.split('/');
+        let currentHandle = targetHandle;
+
+        for (let i = 0; i < pathSegments.length - 1; i++) {
+          currentHandle = await currentHandle.getDirectoryHandle(pathSegments[i], { create: true });
+        }
+
+        const fileHandle = await currentHandle.getFileHandle(pathSegments[pathSegments.length - 1], { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(dirent.content);
+        await writable.close();
+        syncedFiles.push(relativePath);
+      }
+    }
+
+    return syncedFiles;
+  }
+
+  async pushToGitHub(repoName: string, githubUsername: string, ghToken: string) {
+    try {
+      const githubToken = ghToken;
+      const owner = githubUsername;
+
+      if (!githubToken) {
+        throw new Error('GitHub token is not set in environment variables');
+      }
+
+      const octokit = new Octokit({ auth: githubToken });
+
+      try {
+        await octokit.repos.get({ owner, repo: repoName });
+      } catch (error) {
+        if (error instanceof Error && 'status' in error && error.status === 404) {
+          const { data: newRepo } = await octokit.repos.createForAuthenticatedUser({
+            name: repoName,
+            private: false,
+            auto_init: true,
+          });
+          return newRepo;
+        } else {
+          console.log('cannot create repo!');
+          throw error;
+        }
+      }
+
+      const files = this.files.get();
+
+      if (!files || Object.keys(files).length === 0) {
+        throw new Error('No files found to push');
+      }
+
+      const { data: repoData } = await octokit.repos.get({
+        owner: 'some-owner',
+        repo: 'some-repo',
+      });
+
+      const blobs = await Promise.all(
+        Object.entries(files).map(async ([filePath, dirent]) => {
+          if (!dirent || dirent.type !== 'file' || !dirent.content) {
+            return null;
+          }
+
+          const { data: blob } = await octokit.git.createBlob({
+            owner: repoData.owner.login,
+            repo: repoData.name,
+            content: Buffer.from(dirent.content).toString('base64'),
+            encoding: 'base64',
+          });
+
+          return { path: filePath.replace(/^\/home\/project\//, ''), sha: blob.sha };
+        }),
+      );
+
+      const validBlobs = blobs.filter(Boolean);
+
+      if (validBlobs.length === 0) {
+        throw new Error('No valid files to push');
+      }
+
+      const { data: repoInfo } = await octokit.repos.get({
+        owner: 'some-owner',
+        repo: 'some-repo',
+      });
+
+      const { data: ref } = await octokit.git.getRef({
+        owner: repoInfo.owner.login,
+        repo: repoInfo.name,
+        ref: `heads/${repoInfo.default_branch || 'main'}`,
+      });
+
+      const latestCommitSha = ref.object.sha;
+
+      const { data: newTree } = await octokit.git.createTree({
+        owner: repoInfo.owner.login,
+        repo: repoInfo.name,
+        base_tree: latestCommitSha,
+        tree: validBlobs.map((blob) => ({
+          path: blob!.path,
+          mode: '100644',
+          type: 'blob',
+          sha: blob!.sha,
+        })),
+      });
+
+      const { data: newCommit } = await octokit.git.createCommit({
+        owner: repoInfo.owner.login,
+        repo: repoInfo.name,
+        message: 'Initial commit from your app',
+        tree: newTree.sha,
+        parents: [latestCommitSha],
+      });
+
+      await octokit.git.updateRef({
+        owner: repoInfo.owner.login,
+        repo: repoInfo.name,
+        ref: `heads/${repoInfo.default_branch || 'main'}`,
+        sha: newCommit.sha,
+      });
+
+      alert(`Repository created and code pushed: ${repoInfo.html_url}`);
+
+      return repoInfo.html_url;
+    } catch (error) {
+      console.error('Error pushing to GitHub:', error instanceof Error ? error.message : String(error));
+      return null;
+    }
   }
 }
 
