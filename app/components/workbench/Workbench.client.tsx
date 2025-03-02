@@ -3,6 +3,7 @@ import { motion, type HTMLMotionProps, type Variants } from 'framer-motion';
 import { computed } from 'nanostores';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { t } from '~/utils/i18n';
 import {
   type OnChangeCallback as OnEditorChange,
   type OnScrollCallback as OnEditorScroll,
@@ -27,11 +28,11 @@ const viewTransition = { ease: cubicEasingFn };
 const sliderOptions: SliderOptions<WorkbenchViewType> = {
   left: {
     value: 'code',
-    text: 'Code',
+    text: t('code'),
   },
   right: {
     value: 'preview',
-    text: 'Preview',
+    text: t('preview'),
   },
 };
 
@@ -93,7 +94,7 @@ export const Workbench = memo(({ chatStarted, isStreaming }: WorkspaceProps) => 
 
   const onFileSave = useCallback(() => {
     workbenchStore.saveCurrentDocument().catch(() => {
-      toast.error('Failed to update file content');
+      toast.error(t('failed_to_update_file_content'));
     });
   }, []);
 
@@ -107,10 +108,10 @@ export const Workbench = memo(({ chatStarted, isStreaming }: WorkspaceProps) => 
     try {
       const directoryHandle = await (window as any).showDirectoryPicker();
       await workbenchStore.syncFiles(directoryHandle);
-      toast.success('Files synced successfully');
+      toast.success(t('files_synced_successfully'));
     } catch (error) {
-      console.error('Error syncing files:', error);
-      toast.error('Failed to sync files');
+      console.error(t('error_syncing_files'), error);
+      toast.error(t('failed_to_sync_files'));
     } finally {
       setIsSyncing(false);
     }
@@ -147,11 +148,11 @@ export const Workbench = memo(({ chatStarted, isStreaming }: WorkspaceProps) => 
                       }}
                     >
                       <div className="i-ph:code" />
-                      Download Code
+                      {t('download_code')}
                     </PanelHeaderButton>
                     <PanelHeaderButton className="mr-1 text-sm" onClick={handleSyncFiles} disabled={isSyncing}>
                       {isSyncing ? <div className="i-ph:spinner" /> : <div className="i-ph:cloud-arrow-down" />}
-                      {isSyncing ? 'Syncing...' : 'Sync Files'}
+                      {isSyncing ? t('syncing') : t('sync_files')}
                     </PanelHeaderButton>
                     <PanelHeaderButton
                       className="mr-1 text-sm"
@@ -160,32 +161,32 @@ export const Workbench = memo(({ chatStarted, isStreaming }: WorkspaceProps) => 
                       }}
                     >
                       <div className="i-ph:terminal" />
-                      Toggle Terminal
+                      {t('toggle_terminal')}
                     </PanelHeaderButton>
                     <PanelHeaderButton
                       className="mr-1 text-sm"
                       onClick={() => {
                         const repoName = prompt(
-                          'Please enter a name for your new GitHub repository:',
+                          t('enter_repo_name'),
                           'bolt-generated-project',
                         );
 
                         if (!repoName) {
-                          alert('Repository name is required. Push to GitHub cancelled.');
+                          alert(t('repo_name_required'));
                           return;
                         }
 
-                        const githubUsername = prompt('Please enter your GitHub username:');
+                        const githubUsername = prompt(t('enter_github_username'));
 
                         if (!githubUsername) {
-                          alert('GitHub username is required. Push to GitHub cancelled.');
+                          alert(t('github_username_required'));
                           return;
                         }
 
-                        const githubToken = prompt('Please enter your GitHub personal access token:');
+                        const githubToken = prompt(t('enter_github_token'));
 
                         if (!githubToken) {
-                          alert('GitHub token is required. Push to GitHub cancelled.');
+                          alert(t('github_token_required'));
                           return;
                         }
 
@@ -193,7 +194,7 @@ export const Workbench = memo(({ chatStarted, isStreaming }: WorkspaceProps) => 
                       }}
                     >
                       <div className="i-ph:github-logo" />
-                      Push to GitHub
+                      {t('push_to_github')}
                     </PanelHeaderButton>
                   </>
                 )}

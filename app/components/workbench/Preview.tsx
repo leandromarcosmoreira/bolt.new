@@ -1,5 +1,6 @@
 import { useStore } from '@nanostores/react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { t } from '~/utils/i18n';
 import { IconButton } from '~/components/ui/IconButton';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { PortDropdown } from './PortDropdown';
@@ -116,7 +117,7 @@ export const Preview = memo(() => {
         {activePreview ? (
           <iframe ref={iframeRef} className="border-none w-full h-full bg-white" src={iframeUrl} />
         ) : (
-          <div className="flex w-full h-full justify-center items-center bg-white">No preview available</div>
+          <div className="flex w-full h-full justify-center items-center bg-white">{t('no_preview_available')}</div>
         )}
       </div>
     </div>

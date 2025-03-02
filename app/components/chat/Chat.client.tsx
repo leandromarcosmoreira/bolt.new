@@ -12,6 +12,7 @@ import { fileModificationsToHTML } from '~/utils/diff';
 import { cubicEasingFn } from '~/utils/easings';
 import { createScopedLogger, renderLogger } from '~/utils/logger';
 import { BaseChat } from './BaseChat';
+import { t } from '~/utils/i18n';
 
 const toastAnimation = cssTransition({
   enter: 'animated fadeInRight',
@@ -79,7 +80,7 @@ export const ChatImpl = memo(({ initialMessages, storeMessageHistory }: ChatProp
     api: '/api/chat',
     onError: (error) => {
       logger.error('Request failed\n\n', error);
-      toast.error('There was an error processing your request');
+      toast.error(t('error_processing_request'));
     },
     onFinish: () => {
       logger.debug('Finished streaming');

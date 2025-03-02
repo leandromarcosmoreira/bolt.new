@@ -1,5 +1,6 @@
 import type { Message } from 'ai';
-import React, { type RefCallback } from 'react';
+import { t, loadLocale } from '~/utils/i18n';
+import React, { type RefCallback, useEffect, useState } from 'react';
 import { ClientOnly } from 'remix-utils/client-only';
 import { Menu } from '~/components/sidebar/Menu.client';
 import { IconButton } from '~/components/ui/IconButton';
@@ -27,14 +28,6 @@ interface BaseChatProps {
   enhancePrompt?: () => void;
 }
 
-const EXAMPLE_PROMPTS = [
-  { text: 'Build a todo app in React using Tailwind' },
-  { text: 'Build a simple blog using Astro' },
-  { text: 'Create a cookie consent form using Material UI' },
-  { text: 'Make a space invaders game' },
-  { text: 'How do I center a div?' },
-];
-
 const TEXTAREA_MIN_HEIGHT = 76;
 
 export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
@@ -57,7 +50,22 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     },
     ref,
   ) => {
+    const [translationsLoaded, setTranslationsLoaded] = useState(false);
     const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
+
+    useEffect(() => {
+      loadLocale().then(() => setTranslationsLoaded(true));
+    }, []);
+
+    if (!translationsLoaded) return null; // Não renderiza nada até que as traduções sejam carregadas
+
+    const EXAMPLE_PROMPTS = [
+      { text: t('example_todo') },
+      { text: t('example_blog') },
+      { text: t('example_cookie') },
+      { text: t('example_game') },
+      { text: t('example_center_div') },
+    ];
 
     return (
       <div
@@ -74,10 +82,10 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             {!chatStarted && (
               <div id="intro" className="mt-[26vh] max-w-chat mx-auto">
                 <h1 className="text-5xl text-center font-bold text-bolt-elements-textPrimary mb-2">
-                  Where ideas begin
+                  {t('welcome_message')}
                 </h1>
                 <p className="mb-4 text-center text-bolt-elements-textSecondary">
-                  Bring ideas to life in seconds or get help on existing projects.
+                  {t('description')}
                 </p>
               </div>
             )}
@@ -110,7 +118,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 >
                   <textarea
                     ref={textareaRef}
-                    className={`w-full pl-4 pt-4 pr-16 focus:outline-none resize-none text-md text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary bg-transparent`}
+                    className="w-full pl-4 pt-4 pr-16 focus:outline-none resize-none text-md text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary bg-transparent"
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') {
                         if (event.shiftKey) {
@@ -130,7 +138,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       minHeight: TEXTAREA_MIN_HEIGHT,
                       maxHeight: TEXTAREA_MAX_HEIGHT,
                     }}
-                    placeholder="How can Bolt help you today?"
+                    placeholder={t('input_placeholder')}
                     translate="no"
                   />
                   <ClientOnly>
@@ -152,7 +160,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   <div className="flex justify-between text-sm p-4 pt-2">
                     <div className="flex gap-1 items-center">
                       <IconButton
-                        title="Enhance prompt"
+                        title={t('enhance_prompt')}
                         disabled={input.length === 0 || enhancingPrompt}
                         className={classNames({
                           'opacity-100!': enhancingPrompt,
@@ -164,19 +172,19 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         {enhancingPrompt ? (
                           <>
                             <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-loader-progress text-xl"></div>
-                            <div className="ml-1.5">Enhancing prompt...</div>
+                            <div className="ml-1.5">{t('enhancing_prompt')}</div>
                           </>
                         ) : (
                           <>
                             <div className="i-bolt:stars text-xl"></div>
-                            {promptEnhanced && <div className="ml-1.5">Prompt enhanced</div>}
+                            {promptEnhanced && <div className="ml-1.5">{t('prompt_enhanced')}</div>}
                           </>
                         )}
                       </IconButton>
                     </div>
                     {input.length > 3 ? (
                       <div className="text-xs text-bolt-elements-textTertiary">
-                        Use <kbd className="kdb">Shift</kbd> + <kbd className="kdb">Return</kbd> for a new line
+                        {t('new_line_instruction')}
                       </div>
                     ) : null}
                   </div>

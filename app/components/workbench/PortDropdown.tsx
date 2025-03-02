@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from 'react';
+import { t } from '~/utils/i18n';
 import { IconButton } from '~/components/ui/IconButton';
 import type { PreviewInfo } from '~/lib/stores/previews';
 
@@ -52,7 +53,7 @@ export const PortDropdown = memo(
         {isDropdownOpen && (
           <div className="absolute right-0 mt-2 bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor rounded shadow-sm min-w-[140px] dropdown-animation">
             <div className="px-4 py-2 border-b border-bolt-elements-borderColor text-sm font-semibold text-bolt-elements-textPrimary">
-              Ports
+              {t('ports')}
             </div>
             {sortedPreviews.map((preview) => (
               <div
