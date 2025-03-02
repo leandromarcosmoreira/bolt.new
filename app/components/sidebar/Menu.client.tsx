@@ -9,6 +9,7 @@ import { cubicEasingFn } from '~/utils/easings';
 import { logger } from '~/utils/logger';
 import { HistoryItem } from './HistoryItem';
 import { binDates } from './date-binning';
+import { t } from '~/utils/i18n';
 
 const menuVariants = {
   closed: {
@@ -57,12 +58,11 @@ export function Menu() {
           loadEntries();
 
           if (chatId.get() === item.id) {
-            // hard page navigation to clear the stores
             window.location.pathname = '/';
           }
         })
         .catch((error) => {
-          toast.error('Failed to delete conversation');
+          toast.error(t('delete_failed'));
           logger.error(error);
         });
     }
@@ -107,7 +107,7 @@ export function Menu() {
       variants={menuVariants}
       className="flex flex-col side-menu fixed top-0 w-[350px] h-full bg-bolt-elements-background-depth-2 border-r rounded-r-3xl border-bolt-elements-borderColor z-sidebar shadow-xl shadow-bolt-elements-sidebar-dropdownShadow text-sm"
     >
-      <div className="flex items-center h-[var(--header-height)]">{/* Placeholder */}</div>
+      <div className="flex items-center h-[var(--header-height)]"></div>
       <div className="flex-1 flex flex-col h-full w-full overflow-hidden">
         <div className="p-4">
           <a
@@ -115,12 +115,16 @@ export function Menu() {
             className="flex gap-2 items-center bg-bolt-elements-sidebar-buttonBackgroundDefault text-bolt-elements-sidebar-buttonText hover:bg-bolt-elements-sidebar-buttonBackgroundHover rounded-md p-2 transition-theme"
           >
             <span className="inline-block i-bolt:chat scale-110" />
-            Start new chat
+            {t('start_chat')}
           </a>
         </div>
-        <div className="text-bolt-elements-textPrimary font-medium pl-6 pr-5 my-2">Your Chats</div>
+        <div className="text-bolt-elements-textPrimary font-medium pl-6 pr-5 my-2">
+          {t('your_chats')}
+        </div>
         <div className="flex-1 overflow-scroll pl-4 pr-5 pb-5">
-          {list.length === 0 && <div className="pl-2 text-bolt-elements-textTertiary">No previous conversations</div>}
+          {list.length === 0 && (
+            <div className="pl-2 text-bolt-elements-textTertiary">{t('no_previous_conversations')}</div>
+          )}
           <DialogRoot open={dialogContent !== null}>
             {binDates(list).map(({ category, items }) => (
               <div key={category} className="mt-4 first:mt-0 space-y-1">
@@ -135,18 +139,17 @@ export function Menu() {
             <Dialog onBackdrop={closeDialog} onClose={closeDialog}>
               {dialogContent?.type === 'delete' && (
                 <>
-                  <DialogTitle>Delete Chat?</DialogTitle>
+                  <DialogTitle>{t('delete_chat')}</DialogTitle>
                   <DialogDescription asChild>
                     <div>
                       <p>
-                        You are about to delete <strong>{dialogContent.item.description}</strong>.
+                      {t('delete_confirmation', { chat: dialogContent.item.description ?? 'Chat' })}
                       </p>
-                      <p className="mt-1">Are you sure you want to delete this chat?</p>
                     </div>
                   </DialogDescription>
                   <div className="px-5 pb-4 bg-bolt-elements-background-depth-2 flex gap-2 justify-end">
                     <DialogButton type="secondary" onClick={closeDialog}>
-                      Cancel
+                      {t('cancel')}
                     </DialogButton>
                     <DialogButton
                       type="danger"
@@ -155,7 +158,7 @@ export function Menu() {
                         closeDialog();
                       }}
                     >
-                      Delete
+                      {t('delete')}
                     </DialogButton>
                   </div>
                 </>
